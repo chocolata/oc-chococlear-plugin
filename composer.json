@@ -1,7 +1,7 @@
 {
-    "name": "chocolata/chococlear-plugin",
+    "name": "chocolata/oc-chococlear-plugin",
     "type": "october-plugin",
-    "description": "None",
+    "description": "Maintenance plugin for storage and cache",
     "require": {
         "composer/installers": "~1.0"
     }
