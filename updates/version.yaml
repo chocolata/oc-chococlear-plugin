@@ -7,3 +7,4 @@
 1.0.7: Fixed package name for October CMS compatibility
 1.0.8: Version sync
 1.1.0: Performance optimization - manual scan with caching to prevent dashboard blocking on large storage
+1.1.1: Fix AJAX framework - use declarative update pattern instead of JavaScript callbacks

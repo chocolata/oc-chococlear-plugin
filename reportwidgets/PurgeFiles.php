@@ -55,7 +55,7 @@ class PurgeFiles extends ReportWidgetBase
 
         $widget = $this->property('nochart') ? 'widget2' : 'widget';
         return [
-            'partial' => $this->makePartial($widget)
+            '#purgesizes-' . $this->getId() => $this->makePartial($widget)
         ];
     }
 
@@ -156,7 +156,23 @@ class PurgeFiles extends ReportWidgetBase
         Flash::success(Lang::get('chocolata.chococlear::lang.plugin.success'));
 
         // Recalculate and return fresh data
-        return $this->onScan();
+        $sizes = $this->calculateSizes();
+        $scannedAt = now();
+
+        Cache::forever(self::CACHE_KEY, [
+            'sizes' => $sizes,
+            'scanned_at' => $scannedAt,
+        ]);
+
+        $this->vars['size'] = $sizes;
+        $this->vars['last_scan'] = $scannedAt;
+        $this->vars['radius'] = $this->property('radius');
+        $this->vars['widget_id'] = 'purgesizes-' . $this->getId();
+
+        $widget = $this->property('nochart') ? 'widget2' : 'widget';
+        return [
+            '#purgesizes-' . $this->getId() => $this->makePartial($widget)
+        ];
     }
 
     /**
