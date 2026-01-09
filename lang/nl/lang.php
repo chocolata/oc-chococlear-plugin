@@ -17,5 +17,11 @@ return [
         'purge_orphans' => 'Orphan bestanden verwijderen',
         'purge_temp_folder' => 'Temp map legen',
 
+        // Scan functionaliteit
+        'scan'          => 'Scannen',
+        'rescan'        => 'Opslag opnieuw scannen',
+        'last_scan'     => 'Laatste scan',
+        'no_scan_yet'   => 'Nog geen scan uitgevoerd. Klik op "Scannen" om opslag te analyseren.',
+        'confirm_purge' => 'Weet je zeker dat je deze bestanden wilt verwijderen?',
     ],
 ];

@@ -1,9 +1,49 @@
-<div id="cachesizes" class="report-widget">
+<div id="<?= $widget_id ?>" class="report-widget">
     <h3><?= e(trans($this->property('title'))) ?></h3>
-    <p>Use the cog button to select the files to delete.</p>
-    <button type="button" class="btn btn-success"
-            data-request="<?= $this->getEventHandler('onClear') ?>"
-            data-request-success="$('#cachesizes').replaceWith(data.partial)">
-        <?=$size['all']?> | <span class="fa icon-trash"></span>
-    </button>
+
+    <?php if ($size): ?>
+        <div class="callout callout-info">
+            <ul style="margin: 0; padding-left: 20px;">
+                <li>Thumbnails: <?= $size['thumbs'] ?></li>
+                <li>Resizer cache: <?= $size['resizer'] ?></li>
+                <li>Temp folder: <?= $size['temp_folder'] ?></li>
+                <li>Purgeable uploaded files: <?= $size['uploads'] ?></li>
+                <li>Orphaned files: <?= $size['orphans'] ?></li>
+                <li><strong>Total: <?= $size['all'] ?></strong></li>
+            </ul>
+        </div>
+
+        <?php if ($last_scan): ?>
+            <p class="text-muted">
+                <?= e(trans('chocolata.chococlear::lang.plugin.last_scan')) ?>: <?= $last_scan->diffForHumans() ?>
+            </p>
+        <?php endif ?>
+
+        <button type="button" class="btn btn-success"
+                data-request="<?= $this->getEventHandler('onClear') ?>"
+                data-request-success="$('#<?= $widget_id ?>').replaceWith(data.partial)"
+                data-request-confirm="<?= e(trans('chocolata.chococlear::lang.plugin.confirm_purge')) ?>"
+                data-request-loading>
+            <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?> <span class="oc-icon-trash"></span>
+        </button>
+
+        <button type="button" class="btn btn-default"
+                data-request="<?= $this->getEventHandler('onScan') ?>"
+                data-request-success="$('#<?= $widget_id ?>').replaceWith(data.partial)"
+                data-request-loading
+                title="<?= e(trans('chocolata.chococlear::lang.plugin.rescan')) ?>">
+            <span class="oc-icon-refresh"></span>
+        </button>
+    <?php else: ?>
+        <div class="callout callout-info">
+            <p><?= e(trans('chocolata.chococlear::lang.plugin.no_scan_yet')) ?></p>
+        </div>
+
+        <button type="button" class="btn btn-primary"
+                data-request="<?= $this->getEventHandler('onScan') ?>"
+                data-request-success="$('#<?= $widget_id ?>').replaceWith(data.partial)"
+                data-request-loading>
+            <span class="oc-icon-search"></span> <?= e(trans('chocolata.chococlear::lang.plugin.scan')) ?>
+        </button>
+    <?php endif ?>
 </div>

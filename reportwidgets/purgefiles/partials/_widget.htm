@@ -1,17 +1,50 @@
-<div id="purgesizes" class="report-widget">
+<div id="<?= $widget_id ?>" class="report-widget">
     <h3><?= e(trans($this->property('title'))) ?></h3>
-    <div class="control-chart" data-control="chart-pie" data-size="<?=$radius?>" data-center-text="<?=$size['all']?>">
-        <ul>
-            <li>Thumbnails<span><hide class="hidden"><?=$size['thumbs_b']?></hide>&nbsp;<?=$size['thumbs']?></span></li>
-            <li>Resizer cache<span><hide class="hidden"><?=$size['resizer_b']?></hide>&nbsp;<?=$size['resizer']?></span></li>
-            <li>Temp folder<span><hide class="hidden"><?=$size['temp_folder_b']?></hide>&nbsp;<?=$size['temp_folder']?></span></li>
-            <li>Purgeable uploaded files<span><hide class="hidden"><?=$size['uploads_b']?></hide>&nbsp;<?=$size['uploads']?></span></li>
-            <li>Orphaned files<span><hide class="hidden"><?=$size['orphans_b']?></hide>&nbsp;<?=$size['orphans']?></span></li>
-        </ul>
-    </div>
-    <button type="button" class="btn btn-success" style="margin-left: 50px;"
-            data-request="<?= $this->getEventHandler('onClear') ?>"
-            data-request-success="$('#purgesizes').replaceWith(data.partial)">
-        <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?> <span class="fa icon-trash"></span>
-    </button>
+
+    <?php if ($size): ?>
+        <div class="control-chart" data-control="chart-pie" data-size="<?= $radius ?>" data-center-text="<?= $size['all'] ?>">
+            <ul>
+                <li>Thumbnails<span><hide class="hidden"><?= $size['thumbs_b'] ?></hide>&nbsp;<?= $size['thumbs'] ?></span></li>
+                <li>Resizer cache<span><hide class="hidden"><?= $size['resizer_b'] ?></hide>&nbsp;<?= $size['resizer'] ?></span></li>
+                <li>Temp folder<span><hide class="hidden"><?= $size['temp_folder_b'] ?></hide>&nbsp;<?= $size['temp_folder'] ?></span></li>
+                <li>Purgeable uploaded files<span><hide class="hidden"><?= $size['uploads_b'] ?></hide>&nbsp;<?= $size['uploads'] ?></span></li>
+                <li>Orphaned files<span><hide class="hidden"><?= $size['orphans_b'] ?></hide>&nbsp;<?= $size['orphans'] ?></span></li>
+            </ul>
+        </div>
+
+        <?php if ($last_scan): ?>
+            <p class="text-muted" style="margin-left: 50px; margin-top: 10px;">
+                <?= e(trans('chocolata.chococlear::lang.plugin.last_scan')) ?>: <?= $last_scan->diffForHumans() ?>
+            </p>
+        <?php endif ?>
+
+        <div style="margin-left: 50px; margin-top: 10px;">
+            <button type="button" class="btn btn-success"
+                    data-request="<?= $this->getEventHandler('onClear') ?>"
+                    data-request-success="$('#<?= $widget_id ?>').replaceWith(data.partial)"
+                    data-request-confirm="<?= e(trans('chocolata.chococlear::lang.plugin.confirm_purge')) ?>"
+                    data-request-loading>
+                <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?> <span class="oc-icon-trash"></span>
+            </button>
+
+            <button type="button" class="btn btn-default"
+                    data-request="<?= $this->getEventHandler('onScan') ?>"
+                    data-request-success="$('#<?= $widget_id ?>').replaceWith(data.partial)"
+                    data-request-loading
+                    title="<?= e(trans('chocolata.chococlear::lang.plugin.rescan')) ?>">
+                <span class="oc-icon-refresh"></span>
+            </button>
+        </div>
+    <?php else: ?>
+        <div class="callout callout-info">
+            <p><?= e(trans('chocolata.chococlear::lang.plugin.no_scan_yet')) ?></p>
+        </div>
+
+        <button type="button" class="btn btn-primary"
+                data-request="<?= $this->getEventHandler('onScan') ?>"
+                data-request-success="$('#<?= $widget_id ?>').replaceWith(data.partial)"
+                data-request-loading>
+            <span class="oc-icon-search"></span> <?= e(trans('chocolata.chococlear::lang.plugin.scan')) ?>
+        </button>
+    <?php endif ?>
 </div>

@@ -1,10 +1,11 @@
 <?php namespace Chocolata\ChocoClear\ReportWidgets;
 
-use Backend\Classes\ReportWidgetBase;
 use Artisan;
+use Backend\Classes\ReportWidgetBase;
+use Cache;
+use Chocolata\ChocoClear\Classes\SizeHelper;
 use Flash;
 use Lang;
-use Chocolata\ChocoClear\Classes\SizeHelper;
 use System\Models\File as FileModel;
 
 class PurgeFiles extends ReportWidgetBase
@@ -13,16 +14,49 @@ class PurgeFiles extends ReportWidgetBase
     const THUMBS_REGEX      = '/^thumb_.*/';
     const RESIZER_PATH      = '/app/resources/resize';
     const TEMP_FOLDER_PATH  = '/temp';
-
     const UPLOADS_PATH      = '/app/uploads';
+    const CACHE_KEY         = 'chococlear.purgefiles.sizes';
 
     protected $defaultAlias = 'chocolata_purge_files';
 
-    public function render(){
-        $this->vars['size'] = $this->getSizes();
-        $this->vars['radius'] = $this->property("radius");
-        $widget = ($this->property("nochart"))? 'widget2' : 'widget';
+    /**
+     * Render widget - shows cached data only (no calculations)
+     */
+    public function render()
+    {
+        $cached = Cache::get(self::CACHE_KEY);
+
+        $this->vars['size'] = $cached['sizes'] ?? null;
+        $this->vars['last_scan'] = $cached['scanned_at'] ?? null;
+        $this->vars['radius'] = $this->property('radius');
+        $this->vars['widget_id'] = 'purgesizes-' . $this->getId();
+
+        $widget = $this->property('nochart') ? 'widget2' : 'widget';
         return $this->makePartial($widget);
+    }
+
+    /**
+     * AJAX handler: Scan storage and cache results
+     */
+    public function onScan()
+    {
+        $sizes = $this->calculateSizes();
+        $scannedAt = now();
+
+        Cache::forever(self::CACHE_KEY, [
+            'sizes' => $sizes,
+            'scanned_at' => $scannedAt,
+        ]);
+
+        $this->vars['size'] = $sizes;
+        $this->vars['last_scan'] = $scannedAt;
+        $this->vars['radius'] = $this->property('radius');
+        $this->vars['widget_id'] = 'purgesizes-' . $this->getId();
+
+        $widget = $this->property('nochart') ? 'widget2' : 'widget';
+        return [
+            'partial' => $this->makePartial($widget)
+        ];
     }
 
     public function defineProperties()
@@ -74,57 +108,62 @@ class PurgeFiles extends ReportWidgetBase
         ];
     }
 
-    public function onClear(){
+    /**
+     * AJAX handler: Purge files and refresh data
+     */
+    public function onClear()
+    {
         Artisan::call('cache:clear');
-        if ($this->property("purge_thumbs")) {
-            Artisan::call("october:util", [
+
+        if ($this->property('purge_thumbs')) {
+            Artisan::call('october:util', [
                 'name' => 'purge thumbs',
                 '--force' => true,
                 '--no-interaction' => true,
             ]);
         }
-        if($this->property("purge_resizer")){
+        if ($this->property('purge_resizer')) {
             Artisan::call('october:util', [
                 'name' => 'purge resizer',
                 '--force' => true,
                 '--no-interaction' => true,
             ]);
         }
-        if($this->property("purge_uploads")){
+        if ($this->property('purge_uploads')) {
             Artisan::call('october:util', [
                 'name' => 'purge uploads',
                 '--force' => true,
                 '--no-interaction' => true,
             ]);
         }
-        if($this->property("purge_orphans")){
+        if ($this->property('purge_orphans')) {
             Artisan::call('october:util', [
                 'name' => 'purge orphans',
                 '--force' => true,
                 '--no-interaction' => true,
             ]);
         }
-        if($this->property('purge_temp_folder')){
+        if ($this->property('purge_temp_folder')) {
             $path = storage_path() . self::TEMP_FOLDER_PATH;
             if (\File::isDirectory($path)) {
                 \File::cleanDirectory($path);
             }
         }
 
+        // Clear cached sizes after purge
+        Cache::forget(self::CACHE_KEY);
+
         Flash::success(Lang::get('chocolata.chococlear::lang.plugin.success'));
-        $widget = ($this->property("nochart"))? 'widget2' : 'widget';
-        return [
-            'partial' => $this->makePartial(
-                $widget,
-                [
-                    'size'   => $this->getSizes(),
-                    'radius' => $this->property("radius")
-                ]
-            )
-        ];
+
+        // Recalculate and return fresh data
+        return $this->onScan();
     }
 
-    private function getSizes(){
+    /**
+     * Calculate all storage sizes (expensive operation)
+     */
+    private function calculateSizes()
+    {
         $s['thumbs_b'] = SizeHelper::dirSize(
             storage_path() . self::THUMBS_PATH,
             false,
