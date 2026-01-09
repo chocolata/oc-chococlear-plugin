@@ -22,13 +22,13 @@
             <button type="button" class="btn btn-success"
                     data-request="<?= $this->getEventHandler('onClear') ?>"
                     data-request-confirm="<?= e(trans('chocolata.chococlear::lang.plugin.confirm_purge')) ?>"
-                    data-request-loading>
+                    data-stripe-load-indicator>
                 <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?> <span class="oc-icon-trash"></span>
             </button>
 
             <button type="button" class="btn btn-default"
                     data-request="<?= $this->getEventHandler('onScan') ?>"
-                    data-request-loading
+                    data-stripe-load-indicator
                     title="<?= e(trans('chocolata.chococlear::lang.plugin.rescan')) ?>">
                 <span class="oc-icon-refresh"></span>
             </button>
@@ -40,7 +40,7 @@
 
         <button type="button" class="btn btn-primary"
                 data-request="<?= $this->getEventHandler('onScan') ?>"
-                data-request-loading>
+                data-stripe-load-indicator>
             <span class="oc-icon-search"></span> <?= e(trans('chocolata.chococlear::lang.plugin.scan')) ?>
         </button>
     <?php endif ?>
