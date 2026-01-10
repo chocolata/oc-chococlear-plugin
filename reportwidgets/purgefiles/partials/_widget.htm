@@ -13,25 +13,23 @@
             <p style="margin-top: 10px;"><?= e(trans('chocolata.chococlear::lang.plugin.scanning')) ?></p>
         </div>
 
+        <button id="<?= $widget_id ?>-check-status"
+                data-request="<?= $this->getEventHandler('onCheckStatus') ?>"
+                data-request-success="if (!data.scanning) { clearInterval(window['<?= $widget_id ?>_interval']); }"
+                style="display: none;"></button>
+
         <script>
             (function() {
-                var widgetId = '<?= $widget_id ?>';
-                var checkInterval = setInterval(function() {
-                    $.request('<?= $this->getEventHandler('onCheckStatus') ?>', {
-                        success: function(data) {
-                            if (!data.scanning) {
-                                clearInterval(checkInterval);
-                            }
-                        },
-                        error: function() {
-                            clearInterval(checkInterval);
-                        }
-                    });
+                var checkBtn = document.getElementById('<?= $widget_id ?>-check-status');
+                window['<?= $widget_id ?>_interval'] = setInterval(function() {
+                    if (checkBtn) {
+                        $(checkBtn).trigger('click');
+                    }
                 }, 3000);
 
                 // Clear interval when navigating away
                 $(document).one('pjax:start', function() {
-                    clearInterval(checkInterval);
+                    clearInterval(window['<?= $widget_id ?>_interval']);
                 });
             })();
         </script>

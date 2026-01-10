@@ -11,3 +11,4 @@
 1.1.2: Fix empty selector error - replace data-request-loading with data-stripe-load-indicator
 1.2.0: Background job for storage scanning - prevents timeouts and memory issues on large storage
 1.2.1: Sync queue driver fallback - runs synchronously when no real queue is configured
+1.2.2: Fix AJAX polling - use hidden button with data-request to preserve widget context
