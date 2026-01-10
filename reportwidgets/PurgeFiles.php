@@ -3,31 +3,31 @@
 use Artisan;
 use Backend\Classes\ReportWidgetBase;
 use Cache;
-use Chocolata\ChocoClear\Classes\SizeHelper;
+use Chocolata\ChocoClear\Classes\Jobs\ScanStorageJob;
 use Flash;
 use Lang;
-use System\Models\File as FileModel;
 
 class PurgeFiles extends ReportWidgetBase
 {
-    const THUMBS_PATH       = '/app/uploads/public';
-    const THUMBS_REGEX      = '/^thumb_.*/';
-    const RESIZER_PATH      = '/app/resources/resize';
-    const TEMP_FOLDER_PATH  = '/temp';
-    const UPLOADS_PATH      = '/app/uploads';
-    const CACHE_KEY         = 'chococlear.purgefiles.sizes';
+    const CACHE_KEY  = 'chococlear.purgefiles.sizes';
+    const STATUS_KEY = 'chococlear.purgefiles.scan_status';
+    const TEMP_FOLDER_PATH = '/temp';
 
     protected $defaultAlias = 'chocolata_purge_files';
 
     /**
-     * Render widget - shows cached data only (no calculations)
+     * Render widget - shows cached data and scan status
      */
     public function render()
     {
         $cached = Cache::get(self::CACHE_KEY);
+        $status = Cache::get(self::STATUS_KEY);
 
         $this->vars['size'] = $cached['sizes'] ?? null;
         $this->vars['last_scan'] = $cached['scanned_at'] ?? null;
+        $this->vars['scanning'] = ($status === 'scanning');
+        $this->vars['scan_failed'] = is_array($status) && ($status['status'] ?? null) === 'failed';
+        $this->vars['scan_error'] = is_array($status) ? ($status['error'] ?? null) : null;
         $this->vars['radius'] = $this->property('radius');
         $this->vars['widget_id'] = 'purgesizes-' . $this->getId();
 
@@ -36,27 +36,38 @@ class PurgeFiles extends ReportWidgetBase
     }
 
     /**
-     * AJAX handler: Scan storage and cache results
+     * AJAX handler: Start background scan job
      */
     public function onScan()
     {
-        $sizes = $this->calculateSizes();
-        $scannedAt = now();
+        // Dispatch job to queue
+        ScanStorageJob::dispatch();
 
-        Cache::forever(self::CACHE_KEY, [
-            'sizes' => $sizes,
-            'scanned_at' => $scannedAt,
-        ]);
+        // Mark as scanning immediately
+        Cache::put(self::STATUS_KEY, 'scanning', now()->addMinutes(15));
 
-        $this->vars['size'] = $sizes;
-        $this->vars['last_scan'] = $scannedAt;
-        $this->vars['radius'] = $this->property('radius');
-        $this->vars['widget_id'] = 'purgesizes-' . $this->getId();
+        // Return scanning state
+        return $this->returnWidgetState(true);
+    }
 
-        $widget = $this->property('nochart') ? 'widget2' : 'widget';
-        return [
-            '#purgesizes-' . $this->getId() => $this->makePartial($widget)
-        ];
+    /**
+     * AJAX handler: Check scan status (for polling)
+     */
+    public function onCheckStatus()
+    {
+        $status = Cache::get(self::STATUS_KEY);
+
+        // If completed, clear status so we don't keep returning completed
+        if ($status === 'completed') {
+            Cache::forget(self::STATUS_KEY);
+        }
+
+        $scanning = ($status === 'scanning');
+
+        return array_merge(
+            $this->returnWidgetState($scanning),
+            ['scanning' => $scanning]
+        );
     }
 
     public function defineProperties()
@@ -109,7 +120,7 @@ class PurgeFiles extends ReportWidgetBase
     }
 
     /**
-     * AJAX handler: Purge files and refresh data
+     * AJAX handler: Purge files and start background rescan
      */
     public function onClear()
     {
@@ -152,20 +163,31 @@ class PurgeFiles extends ReportWidgetBase
 
         // Clear cached sizes after purge
         Cache::forget(self::CACHE_KEY);
+        Cache::forget(self::STATUS_KEY);
 
         Flash::success(Lang::get('chocolata.chococlear::lang.plugin.success'));
 
-        // Recalculate and return fresh data
-        $sizes = $this->calculateSizes();
-        $scannedAt = now();
+        // Dispatch scan job to recalculate
+        ScanStorageJob::dispatch();
+        Cache::put(self::STATUS_KEY, 'scanning', now()->addMinutes(15));
 
-        Cache::forever(self::CACHE_KEY, [
-            'sizes' => $sizes,
-            'scanned_at' => $scannedAt,
-        ]);
+        // Return scanning state
+        return $this->returnWidgetState(true, true);
+    }
 
-        $this->vars['size'] = $sizes;
-        $this->vars['last_scan'] = $scannedAt;
+    /**
+     * Helper to return widget partial with current state
+     */
+    private function returnWidgetState(bool $scanning = false, bool $clearData = false): array
+    {
+        $cached = Cache::get(self::CACHE_KEY);
+        $status = Cache::get(self::STATUS_KEY);
+
+        $this->vars['size'] = $clearData ? null : ($cached['sizes'] ?? null);
+        $this->vars['last_scan'] = $clearData ? null : ($cached['scanned_at'] ?? null);
+        $this->vars['scanning'] = $scanning;
+        $this->vars['scan_failed'] = is_array($status) && ($status['status'] ?? null) === 'failed';
+        $this->vars['scan_error'] = is_array($status) ? ($status['error'] ?? null) : null;
         $this->vars['radius'] = $this->property('radius');
         $this->vars['widget_id'] = 'purgesizes-' . $this->getId();
 
@@ -174,102 +196,4 @@ class PurgeFiles extends ReportWidgetBase
             '#purgesizes-' . $this->getId() => $this->makePartial($widget)
         ];
     }
-
-    /**
-     * Calculate all storage sizes (expensive operation)
-     */
-    private function calculateSizes()
-    {
-        $s['thumbs_b'] = SizeHelper::dirSize(
-            storage_path() . self::THUMBS_PATH,
-            false,
-            self::THUMBS_REGEX,
-            false
-        );
-        $s['thumbs']        = SizeHelper::formatSize($s['thumbs_b']);
-        $s['resizer_b']     = SizeHelper::dirSize(storage_path() . self::RESIZER_PATH);
-        $s['resizer']       = SizeHelper::formatSize($s['resizer_b']);
-        $s['uploads_b']     = $this->purgeableUploadsBytes((storage_path() . self::UPLOADS_PATH).'/public') +
-                              $this->purgeableUploadsBytes((storage_path() . self::UPLOADS_PATH).'/protected');
-        $s['uploads']       = SizeHelper::formatSize($s['uploads_b']);
-        $s['orphans_b']     = $this->orphanedFilesBytes();
-        $s['orphans']       = SizeHelper::formatSize($s['orphans_b']);
-        $s['temp_folder_b'] = SizeHelper::dirSize(storage_path() . self::TEMP_FOLDER_PATH);
-        $s['temp_folder']   = SizeHelper::formatSize($s['temp_folder_b']);
-
-        $s['all']         = SizeHelper::formatSize($s['thumbs_b'] + $s['resizer_b'] + $s['temp_folder_b'] + $s['uploads_b'] + $s['orphans_b']);
-        return $s;
-    }
-
-
-
-    private function purgeableUploadsBytes(string $localPath): int
-    {
-        if (!is_dir($localPath)) {
-            return 0;
-        }
-
-        $total = 0;
-
-        // Grotere chunks zijn efficiënter; pas aan naar smaak
-        $chunks = collect(\File::allFiles($localPath))->chunk(500);
-
-        foreach ($chunks as $chunk) {
-            // verzamel bestandsnamen (disk_name)
-            $names = [];
-            foreach ($chunk as $file) {
-                $names[] = $file->getFilename();
-            }
-
-            if (!$names) {
-                continue;
-            }
-
-            // bekende disk_names in DB ophalen en omzetten naar set voor O(1) lookup
-            $present = array_flip(
-                FileModel::whereIn('disk_name', $names)->pluck('disk_name')->all()
-            );
-
-            foreach ($chunk as $file) {
-                $name = $file->getFilename();
-
-                if (!isset($present[$name])) {
-                    try {
-                        $total += $file->getSize();
-                    } catch (\Throwable $e) {
-                        // onleesbaar / race condition -> overslaan
-                    }
-                }
-            }
-        }
-
-        return $total;
-    }
-
-
-    private function orphanedFilesBytes(): int
-    {
-        $total = 0;
-
-        FileModel::whereNull('attachment_id')
-            ->chunkById(1000, function ($files) use (&$total) {
-                foreach ($files as $file) {
-                    try {
-                        // Bepaal disk + pad zoals October het bewaart
-                        $disk = $file->disk ?: 'local';
-                        $path = method_exists($file, 'getDiskPath') ? $file->getDiskPath() : null;
-
-                        if ($path && \Storage::disk($disk)->exists($path)) {
-                            // Neem de DB-kolom file_size (snel) maar tel alleen als het bestand echt bestaat
-                            $total += (int) $file->file_size;
-                        }
-                    } catch (\Throwable $e) {
-                        // overslaan bij race conditions / onleesbare disks
-                    }
-                }
-            });
-
-        return $total;
-    }
-
 }

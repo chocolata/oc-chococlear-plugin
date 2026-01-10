@@ -23,5 +23,8 @@ return [
         'last_scan'     => 'Last scan',
         'no_scan_yet'   => 'No scan performed yet. Click "Scan" to analyze storage.',
         'confirm_purge' => 'Are you sure you want to purge these files?',
+        'scanning'      => 'Scanning storage in background...',
+        'scan_failed'   => 'Storage scan failed. Please try again.',
+        'retry_scan'    => 'Retry Scan',
     ],
 ];

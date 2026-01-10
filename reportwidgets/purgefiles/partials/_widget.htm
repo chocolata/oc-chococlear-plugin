@@ -1,7 +1,56 @@
 <div id="<?= $widget_id ?>" class="report-widget">
     <h3><?= e(trans($this->property('title'))) ?></h3>
 
-    <?php if ($size): ?>
+    <?php if ($scanning): ?>
+        <div class="callout callout-info">
+            <div class="loading-indicator-container">
+                <div class="loading-indicator is-transparent">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+            <p style="margin-top: 10px;"><?= e(trans('chocolata.chococlear::lang.plugin.scanning')) ?></p>
+        </div>
+
+        <script>
+            (function() {
+                var widgetId = '<?= $widget_id ?>';
+                var checkInterval = setInterval(function() {
+                    $.request('<?= $this->getEventHandler('onCheckStatus') ?>', {
+                        success: function(data) {
+                            if (!data.scanning) {
+                                clearInterval(checkInterval);
+                            }
+                        },
+                        error: function() {
+                            clearInterval(checkInterval);
+                        }
+                    });
+                }, 3000);
+
+                // Clear interval when navigating away
+                $(document).one('pjax:start', function() {
+                    clearInterval(checkInterval);
+                });
+            })();
+        </script>
+
+    <?php elseif ($scan_failed): ?>
+        <div class="callout callout-danger">
+            <p><?= e(trans('chocolata.chococlear::lang.plugin.scan_failed')) ?></p>
+            <?php if ($scan_error): ?>
+                <p class="text-muted"><small><?= e($scan_error) ?></small></p>
+            <?php endif ?>
+        </div>
+
+        <button type="button" class="btn btn-primary"
+                data-request="<?= $this->getEventHandler('onScan') ?>"
+                data-stripe-load-indicator>
+            <span class="oc-icon-refresh"></span> <?= e(trans('chocolata.chococlear::lang.plugin.retry_scan')) ?>
+        </button>
+
+    <?php elseif ($size): ?>
         <div class="control-chart" data-control="chart-pie" data-size="<?= $radius ?>" data-center-text="<?= $size['all'] ?>">
             <ul>
                 <li>Thumbnails<span><hide class="hidden"><?= $size['thumbs_b'] ?></hide>&nbsp;<?= $size['thumbs'] ?></span></li>
@@ -33,6 +82,7 @@
                 <span class="oc-icon-refresh"></span>
             </button>
         </div>
+
     <?php else: ?>
         <div class="callout callout-info">
             <p><?= e(trans('chocolata.chococlear::lang.plugin.no_scan_yet')) ?></p>

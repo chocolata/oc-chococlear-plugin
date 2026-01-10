@@ -23,5 +23,8 @@ return [
         'last_scan'     => 'Laatste scan',
         'no_scan_yet'   => 'Nog geen scan uitgevoerd. Klik op "Scannen" om opslag te analyseren.',
         'confirm_purge' => 'Weet je zeker dat je deze bestanden wilt verwijderen?',
+        'scanning'      => 'Opslag wordt gescand in achtergrond...',
+        'scan_failed'   => 'Opslag scan mislukt. Probeer het opnieuw.',
+        'retry_scan'    => 'Scan opnieuw',
     ],
 ];
