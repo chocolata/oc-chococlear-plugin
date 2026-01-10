@@ -40,7 +40,12 @@ class PurgeFiles extends ReportWidgetBase
      */
     public function onScan()
     {
-        // Dispatch job to queue
+        // When using sync queue driver, run directly (no background processing)
+        if (config('queue.default') === 'sync') {
+            return $this->runScanSynchronously();
+        }
+
+        // Dispatch job to real queue
         ScanStorageJob::dispatch();
 
         // Mark as scanning immediately
@@ -48,6 +53,19 @@ class PurgeFiles extends ReportWidgetBase
 
         // Return scanning state
         return $this->returnWidgetState(true);
+    }
+
+    /**
+     * Run scan synchronously (for sync queue driver)
+     * Note: May timeout/memory issues on large storage
+     */
+    private function runScanSynchronously(): array
+    {
+        $job = new ScanStorageJob();
+        $job->handle();
+
+        // Return completed state immediately
+        return $this->returnWidgetState(false);
     }
 
     /**
@@ -167,7 +185,15 @@ class PurgeFiles extends ReportWidgetBase
 
         Flash::success(Lang::get('chocolata.chococlear::lang.plugin.success'));
 
-        // Dispatch scan job to recalculate
+        // Rescan after purge
+        if (config('queue.default') === 'sync') {
+            // Run directly for sync driver
+            $job = new ScanStorageJob();
+            $job->handle();
+            return $this->returnWidgetState(false);
+        }
+
+        // Dispatch scan job to real queue
         ScanStorageJob::dispatch();
         Cache::put(self::STATUS_KEY, 'scanning', now()->addMinutes(15));
 
