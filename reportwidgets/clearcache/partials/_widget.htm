@@ -8,9 +8,10 @@
             <li>framework/cache<span><hide class="hidden"><?=$size['fcache_b']?></hide>&nbsp;<?=$size['fcache']?></span></li>
         </ul>
     </div>
-    <button type="button" class="btn btn-success" style="margin-left: 50px;"
-            data-request="<?= $this->getEventHandler('onClear') ?>"
-            data-request-success="$('#cachesizes').replaceWith(data.partial)">
-        <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?> <span class="fa icon-trash"></span>
-    </button>
+    <a href="javascript:;" class="btn btn-danger oc-icon-trash" style="margin-left: 50px;"
+       data-request="<?= $this->getEventHandler('onClear') ?>"
+       data-request-success="$('#cachesizes').replaceWith(data.partial)"
+       data-stripe-load-indicator>
+        <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?>
+    </a>
 </div>

@@ -14,3 +14,4 @@
 1.2.2: Fix AJAX polling - use hidden button with data-request to preserve widget context
 1.2.3: Use standard October CMS loading indicator pattern during scan
 1.2.4: Use October CMS button patterns with icon classes
+1.2.5: Add text to scan buttons, update clearcache widget to use btn-danger pattern

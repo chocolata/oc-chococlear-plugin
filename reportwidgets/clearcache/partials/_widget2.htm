@@ -1,8 +1,9 @@
 <div id="cachesizes" class="report-widget">
     <h3><?= e(trans($this->property('title'))) ?></h3>
-    <button type="button" class="btn btn-success"
-            data-request="<?= $this->getEventHandler('onClear') ?>"
-            data-request-success="$('#cachesizes').replaceWith(data.partial)">
-        <?=$size['all']?> | <span class="fa icon-trash"></span>
-    </button>
+    <a href="javascript:;" class="btn btn-danger oc-icon-trash"
+       data-request="<?= $this->getEventHandler('onClear') ?>"
+       data-request-success="$('#cachesizes').replaceWith(data.partial)"
+       data-stripe-load-indicator>
+        <?= $size['all'] ?> | <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?>
+    </a>
 </div>
