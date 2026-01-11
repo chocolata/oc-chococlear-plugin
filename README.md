@@ -31,19 +31,23 @@ Scan storage and purge generated/redundant files. Supports **background processi
 
 ---
 
-## Queue Setup (Recommended)
+## Queue Setup (Required for large storage)
 
-For large storage, configure a real queue driver to prevent timeouts:
+For large storage (17GB+), configure a real queue driver:
 
 ```env
 QUEUE_CONNECTION=database
 ```
 
+**Important:** The worker timeout must match the job timeout (30 minutes):
+
 ```bash
-php artisan queue:work --timeout=600
+php artisan queue:work --timeout=1800
 ```
 
-Without a queue worker, scans run synchronously (may timeout on large storage).
+Without `--timeout=1800`, the worker will kill the job before it completes.
+
+Without a queue worker, scans run synchronously (will timeout on large storage).
 
 ---
 

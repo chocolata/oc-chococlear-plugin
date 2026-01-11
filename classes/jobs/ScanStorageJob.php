@@ -22,14 +22,14 @@ class ScanStorageJob implements ShouldQueue
     const STATUS_KEY        = 'chococlear.purgefiles.scan_status';
 
     /**
-     * Job timeout (10 minutes for large storage)
+     * Job timeout (30 minutes for very large storage 17GB+)
      */
-    public $timeout = 600;
+    public $timeout = 1800;
 
     /**
-     * Number of retry attempts
+     * Don't retry - if it times out, retrying won't help
      */
-    public $tries = 2;
+    public $tries = 1;
 
     /**
      * Execute the job
