@@ -2,15 +2,11 @@
     <h3><?= e(trans($this->property('title'))) ?></h3>
 
     <?php if ($scanning): ?>
-        <div class="callout callout-info">
-            <div class="loading-indicator-container">
-                <div class="loading-indicator is-transparent">
-                    <div></div>
-                    <div></div>
-                    <div></div>
-                </div>
+        <div class="loading-indicator-container">
+            <div class="loading-indicator">
+                <span></span>
+                <div><?= e(trans('chocolata.chococlear::lang.plugin.scanning')) ?></div>
             </div>
-            <p style="margin-top: 10px;"><?= e(trans('chocolata.chococlear::lang.plugin.scanning')) ?></p>
         </div>
 
         <button id="<?= $widget_id ?>-check-status"
