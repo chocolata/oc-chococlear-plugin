@@ -38,11 +38,11 @@
             <?php endif ?>
         </div>
 
-        <button type="button" class="btn btn-primary"
-                data-request="<?= $this->getEventHandler('onScan') ?>"
-                data-stripe-load-indicator>
-            <span class="oc-icon-refresh"></span> <?= e(trans('chocolata.chococlear::lang.plugin.retry_scan')) ?>
-        </button>
+        <a href="javascript:;" class="btn btn-default oc-icon-refresh"
+           data-request="<?= $this->getEventHandler('onScan') ?>"
+           data-stripe-load-indicator>
+            <?= e(trans('chocolata.chococlear::lang.plugin.retry_scan')) ?>
+        </a>
 
     <?php elseif ($size): ?>
         <div class="callout callout-info">
@@ -62,29 +62,28 @@
             </p>
         <?php endif ?>
 
-        <button type="button" class="btn btn-success"
-                data-request="<?= $this->getEventHandler('onClear') ?>"
-                data-request-confirm="<?= e(trans('chocolata.chococlear::lang.plugin.confirm_purge')) ?>"
-                data-stripe-load-indicator>
-            <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?> <span class="oc-icon-trash"></span>
-        </button>
+        <a href="javascript:;" class="btn btn-danger oc-icon-trash"
+           data-request="<?= $this->getEventHandler('onClear') ?>"
+           data-request-confirm="<?= e(trans('chocolata.chococlear::lang.plugin.confirm_purge')) ?>"
+           data-stripe-load-indicator>
+            <?= e(trans('chocolata.chococlear::lang.plugin.clear')) ?>
+        </a>
 
-        <button type="button" class="btn btn-default"
-                data-request="<?= $this->getEventHandler('onScan') ?>"
-                data-stripe-load-indicator
-                title="<?= e(trans('chocolata.chococlear::lang.plugin.rescan')) ?>">
-            <span class="oc-icon-refresh"></span>
-        </button>
+        <a href="javascript:;" class="btn btn-default oc-icon-refresh"
+           data-request="<?= $this->getEventHandler('onScan') ?>"
+           data-stripe-load-indicator
+           title="<?= e(trans('chocolata.chococlear::lang.plugin.rescan')) ?>">
+        </a>
 
     <?php else: ?>
         <div class="callout callout-info">
             <p><?= e(trans('chocolata.chococlear::lang.plugin.no_scan_yet')) ?></p>
         </div>
 
-        <button type="button" class="btn btn-primary"
-                data-request="<?= $this->getEventHandler('onScan') ?>"
-                data-stripe-load-indicator>
-            <span class="oc-icon-search"></span> <?= e(trans('chocolata.chococlear::lang.plugin.scan')) ?>
-        </button>
+        <a href="javascript:;" class="btn btn-default oc-icon-refresh"
+           data-request="<?= $this->getEventHandler('onScan') ?>"
+           data-stripe-load-indicator>
+            <?= e(trans('chocolata.chococlear::lang.plugin.scan')) ?>
+        </a>
     <?php endif ?>
 </div>

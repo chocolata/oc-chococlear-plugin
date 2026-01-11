@@ -13,3 +13,4 @@
 1.2.1: Sync queue driver fallback - runs synchronously when no real queue is configured
 1.2.2: Fix AJAX polling - use hidden button with data-request to preserve widget context
 1.2.3: Use standard October CMS loading indicator pattern during scan
+1.2.4: Use October CMS button patterns with icon classes
